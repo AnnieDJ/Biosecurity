@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>All Gardeners</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h1>All Gardeners</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Email</th>
+            <th>Phone Number</th>
+            <th>Date Joined</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for gardner in gardners %}
+          <tr>
+            <td>{{ gardner.First_Name }} {{ gardner.Last_Name }}</td>
+            <td>{{ gardner.Address }}</td>
+            <td>{{ gardner.Email }}</td>
+            <td>{{ gardner.Phone_Number }}</td>
+            <td>{{ gardner.Date_Joined.strftime('%Y-%m-%d') }}</td>
+            <td>{{ gardner.Status }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6">No gardeners found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,85 @@
+/* 为所有元素设置盒模型布局，统一字体风格和大小，并优化字体渲染 */
+* {
+    box-sizing: border-box;  /* 设置所有元素的盒模型为border-box */
+    font-family: -apple-system, BlinkMacSystemFont, "segoe ui", roboto, oxygen, ubuntu, cantarell, "fira sans", "droid sans", "helvetica neue", Arial, sans-serif;  /* 统一字体风格 */
+    font-size: 20px;  /* 设置基础字体大小 */
+    -webkit-font-smoothing: antialiased;  /* 在Webkit浏览器中优化字体渲染 */
+    -moz-osx-font-smoothing: grayscale;  /* 在Firefox中优化Mac OS X下的字体渲染 */
+}
+
+/* 设置body的背景色和边距 */
+body {
+    background-color: #435165;  /* 背景色 */
+    margin: 0;  /* 去除默认边距 */
+}
+
+/* 设置登录和注册框的样式 */
+.login, .register {
+    width: 400px;  /* 宽度 */
+    background-color: #ffffff;  /* 背景颜色 */
+    box-shadow: 0 0 9px 0 rgba(0, 0, 0, 0.3);  /* 盒子阴影 */
+    margin: 100px auto;  /* 上下边距100px，左右居中 */
+}
+
+/* 设置登录和注册标题的样式 */
+.login h1, .register h1 {
+    text-align: center;  /* 标题居中 */
+    color: #5b6574;  /* 字体颜色 */
+    font-size: 24px;  /* 字体大小 */
+    padding: 20px 0;  /* 上下内边距 */
+    border-bottom: 1px solid #dee0e4;  /* 下边框 */
+}
+
+/* 设置登录和注册页内链接的样式 */
+.login .links, .register .links {
+    display: flex;  /* 使用Flex布局 */
+    padding: 0 15px;  /* 左右内边距 */
+}
+.login .links a, .register .links a {
+    color: #adb2ba;  /* 链接字体颜色 */
+    text-decoration: none;  /* 去除下划线 */
+    display: inline-flex;  /* 使用Flex内联布局 */
+    padding: 0 10px 10px;  /* 内边距 */
+    font-weight: bold;  /* 字体加粗 */
+}
+.login .links a:hover, .register .links a:hover {
+    color: #9da3ac;  /* 鼠标悬浮时的字体颜色 */
+}
+.login .links a.active, .register .links a.active {
+    border-bottom: 3px solid #3274d6;  /* 激活链接的下边框 */
+    color: #3274d6;  /* 激活链接的字体颜色 */
+}
+
+/* 设置表单的布局和样式 */
+.login form, .register form {
+    display: flex;  /* 使用Flex布局 */
+    flex-wrap: wrap;  /* 允许换行 */
+    justify-content: center;  /* 内容居中对齐 */
+    padding-top: 20px;  /* 顶部内边距 */
+}
+.login form label, .register form label {
+    display: flex;  /* 使用Flex布局 */
+    justify-content: center;  /* 内容居中对齐 */
+    align-items: center;  /* 项目垂直居中 */
+    width: 50px;  /* 宽度 */
+    height: 50px;  /* 高度 */
+    background-color: #3274d6;  /* 背景颜色 */
+    color: #ffffff;  /* 字体颜色 */
+}
+.login form input[type="password"], .login form input[type="text"], .login form input[type="email"], .register form input[type="password"], .register form input[type="text"], .register form input[type="email"] {
+    width: 310px;  /* 宽度 */
+    height: 50px;  /* 高度 */
+    border: 1px solid #dee0e4;  /* 边框 */
+    margin-bottom: 20px;  /* 下边距 */
+    padding: 0 15px;  /* 左右内边距 */
+}
+.login form input[type="submit"], .register form input[type="submit"] {
+    width: 100%;  /* 宽度占满容器 */
+    padding: 15px;  /* 内边距 */
+    margin-top: 20px;  /* 上边距 */
+    background-color: #3274d6;  /* 背景颜色 */
+    border: 0;  /* 去除边框 */
+    cursor: pointer;  /* 鼠标样式为指针 */
+    font-weight: bold;  /* 字体加粗 */
+    color: #ffffff;  /* 字体颜色 */
+    transition: background-color 0.2s;  /* 背景色变化过渡效果 */

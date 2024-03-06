@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weed Details</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h1>{{ weed.get('common name', 'Unknown') }} Details</h1>
+      <img
+        src="{{ url_for('static', filename=weed.get('prImgLocalPath', 'default.png')).replace('/static', '', 1) }}"
+        alt="Primary Image"
+      />
+      <h2>Scientific Name: {{ weed.get('scientific name', 'Unknown') }}</h2>
+      <p>
+        Description: {{ weed.get('description', 'No description available.') }}
+      </p>
+      <p>
+        Impact: {{ weed.get('impacts', 'No impact information available.') }}
+      </p>
+      <p>
+        Control Methods: {{ weed.get('control methods', 'No control methods
+        available.') }}
+      </p>
+
+      <div class="additional-images">
+        {% if weed.get('img1LocalPath') %}
+        <img
+          src="{{ url_for('static', filename=weed.get('img1LocalPath')).replace('/static', '', 1) }}"
+          alt="Image 1"
+        />
+        {% endif %} {% if weed.get('img2LocalPath') %}
+        <img
+          src="{{ url_for('static', filename=weed.get('img2LocalPath')).replace('/static', '', 1) }}"
+          alt="Image 2"
+        />
+        {% endif %} {% if weed.get('img3LocalPath') %}
+        <img
+          src="{{ url_for('static', filename=weed.get('img3LocalPath')).replace('/static', '', 1) }}"
+          alt="Image 3"
+        />
+        {% endif %}
+      </div>
+
+      <a href="{{ url_for('showWeedlist') }}">Back to Weed List</a>
+    </div>
+  </body>
+</html>

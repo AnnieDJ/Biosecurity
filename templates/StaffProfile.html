@@ -1,0 +1,100 @@
+{% extends 'layout.html' %} {% block title %}GardenerUser Profile{% endblock %}
+{% block content %}
+<script>
+  function showEditForm(field) {
+    document.getElementById(field + "EditForm").style.display = "block";
+  }
+
+  function showChangePasswordForm() {
+    document.getElementById("changePasswordForm").style.display = "block";
+  }
+
+  function validatePassword() {
+    var newPassword = document.getElementsByName("new_password")[0].value;
+    var confirmPassword =
+      document.getElementsByName("confirm_password")[0].value;
+    if (newPassword !== confirmPassword) {
+      alert("Passwords do not match.");
+      return false; // 阻止表单提交
+    }
+    return true; // 允许表单提交
+  }
+</script>
+{% if role == 'staff' %}
+<h2>Staff Profile Page</h2>
+{% elif role == 'Administration' %}
+<h2>Administration Profile Page</h2>
+{% endif %}
+<div>
+  <p>Your account details are below:</p>
+  <table>
+    <tr>
+      <td>Username:</td>
+      <td>{{ account.First_Name }} {{ account.Last_Name }}</td>
+    </tr>
+    <tr>
+      <td>Email:</td>
+      <td>{{ account.Email }}</td>
+    </tr>
+    <tr>
+      <td>Work Phone:</td>
+      <td>{{ account.Work_Phone_number }}</td>
+      <td>
+        <button type="button" onclick="showEditForm('Phone')">Edit</button>
+      </td>
+    </tr>
+    <tr id="PhoneEditForm" style="display: none">
+      <td colspan="3">
+        <form action="/updateProfile" method="post">
+          <input
+            type="hidden"
+            name="PhoneEdit_Form_Source"
+            value="staff_profile"
+          />
+          New Phone:
+          <input
+            type="text"
+            name="Phone_Number"
+            value="{{ account.Work_Phone_number }}"
+          />
+          <input type="submit" name="submit" value="Update Phone" />
+        </form>
+      </td>
+    </tr>
+    <tr>
+      <td>Hire Date:</td>
+      <td>{{ account.Hire_date }}</td>
+    </tr>
+    <tr>
+      <td>Position:</td>
+      <td>{{ account.Position }}</td>
+    </tr>
+    <tr>
+      <td>Department:</td>
+      <td>{{ account.Department }}</td>
+    </tr>
+    <tr>
+      <td>Status:</td>
+      <td>{{ account.Status }}</td>
+    </tr>
+  </table>
+  <button onclick="showChangePasswordForm()">Change Password</button>
+  <form
+    id="changePasswordForm"
+    style="display: none"
+    action="/changePassword"
+    method="post"
+    onsubmit="return validatePassword()"
+  >
+    <input
+      type="hidden"
+      name="ChangePassWord_Form_Source"
+      value="staff_profile"
+    />
+    New Password: <input type="password" name="new_password" /><br />
+    Confirm Password: <input type="password" name="confirm_password" /><br />
+    <input type="submit" value="Confirm" />
+  </form>
+</div>
+
+{% endblock %}

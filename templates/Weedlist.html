@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weed List</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Weed List</h1>
+      <div class="weed-list">
+        {% for weed in weeds %}
+        <div class="weed-item">
+          <h2>{{ weed['common name'] }} ({{ weed['weed type'] }})</h2>
+          <a href="/GardnerUser/Weedlist/WeedDetail/{{ weed['id'] }}">
+            <img
+              <img
+              src="{{ url_for('static', filename=weed['primary image']).replace('/static', '', 1) }}"
+              alt="Primary Image of {{ weed['common name'] }}"
+            />
+          </a>
+          <p>{{ weed['description'] | truncate(150) }}</p>
+          <!-- 可选：展示简短描述 -->
+        </div>
+        {% else %}
+        <p>No weeds found.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </body>
+</html>
