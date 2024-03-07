@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Edit Gardener</title>
+  </head>
+  <body>
+    <h1>Edit Gardener Profile</h1>
+    {% if message %}
+    <p style="color: red">{{ message }}</p>
+    {% endif %}
+    <form
+      action="{{ url_for('update_gardener', gardner_id=gardner_id) }}"
+      method="POST"
+    >
+      <label for="First_Name">First Name:</label>
+      <input type="text" id="First_Name" name="First_Name" required />
+
+      <label for="Last_Name">Last Name:</label>
+      <input type="text" id="Last_Name" name="Last_Name" required />
+
+      <label for="Address">Address:</label>
+      <input type="text" id="Address" name="Address" required />
+
+      <label for="Phone_Number">Phone Number:</label>
+      <input type="text" id="Phone_Number" name="Phone_Number" required />
+
+      <label for="Status">Status:</label>
+      <select id="Status" name="Status">
+        <option value="Active">Active</option>
+        <option value="Inactive">Inactive</option>
+      </select>
+
+      <!-- Display-only fields -->
+      <p>Email: {{gardner.Email}}</p>
+      <p>Date Joined: {{gardner.Date_Joined}}</p>
+
+      <button type="submit">Update</button>
+    </form>
+  </body>
+</html>

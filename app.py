@@ -92,6 +92,28 @@ def getCursor():
     dbconn = connection.cursor(dictionary=True)
     return dbconn
 
+
+@app.route('/')
+def index():
+    """
+    Redirect to the login page if the user is not logged in,
+    otherwise redirect to the user's home page.
+    """
+    # 检查用户是否已经登录，这里假设你在登录后会设置 session['loggedin']
+    if 'loggedin' in session:
+        # 根据用户的角色重定向到不同的首页
+        if session['role'] == 'Staff':
+            return redirect(url_for('staff'))
+        elif session['role'] == 'Administration':
+            return redirect(url_for('staff'))
+        else:
+            return redirect(url_for('gardner_user'))
+    else:
+        # 如果用户未登录，重定向到登录页面
+        return redirect(url_for('login'))
+
+
+
 # http://localhost:5000/login/ - this will be the login page, we need to use both GET and POST requests
 @app.route('/login/', methods=['GET', 'POST'])
 def login():
@@ -136,6 +158,21 @@ def login():
             msg = 'Incorrect username'
     # Show the login form with message (if any)
     return render_template('login.html', msg=msg)
+
+
+# http://localhost:5000/logout - this will be the logout page
+@app.route('/logout')
+def logout():
+    # Remove session data, this will log the user out
+   session.pop('loggedin', None)
+   session.pop('id', None)
+   session.pop('username', None)
+   session.pop('role', None)
+   session.pop('email', None)
+    
+   # Redirect to login page
+   return redirect(url_for('login'))
+
 
 
 
@@ -304,15 +341,16 @@ def ManageGardenerProfile():
 
 
 
-# http://localhost:5000/Staff/StaffProfile - this will be the Staff or Adminstrator Manager Profile page
-@app.route('/Staff/StaffProfile')
+# http://localhost:5000/Staff/ManageStaffProfile - this will be the Staff or Adminstrator Manage Profile page
+@app.route('/Staff/ManageStaffProfile')
 def ManageStaffProfile():
+        
         cursor = getCursor()
-        query = '''SELECT * FROM staff_admin where secureaccount_id in (SELECT ID FROM secureaccount where role = %s) '''
-        cursor.execute(query, (session['role'],))
-        accounts = cursor.fetchall()
+        query = '''SELECT * FROM staff_admin '''
+        cursor.execute(query)
+        staffs = cursor.fetchall()
         # Show the gardner profile page with account info
-        return render_template('ManageStaff.html',accounts=accounts)
+        return render_template('ManageStaff.html',staffs=staffs)
 
 
 @app.route('/Staff/ManageWeed')
@@ -337,18 +375,7 @@ def showAdministrationProfile():
         # Show the gardner profile page with account info
         return render_template('Administration.html',account=account)
 
-# http://localhost:5000/logout - this will be the logout page
-@app.route('/logout')
-def logout():
-    # Remove session data, this will log the user out
-   session.pop('loggedin', None)
-   session.pop('id', None)
-   session.pop('username', None)
-   session.pop('role', None)
-   session.pop('email', None)
-    
-   # Redirect to login page
-   return redirect(url_for('login'))
+
 
 @app.route('/changePassword', methods=['POST'])
 def change_password():
@@ -449,6 +476,55 @@ def add_gardener_submit():
     # 重定向回园丁管理页面
     return redirect(url_for('ManageGardenerProfile'))
 
+
+
+# ! this will be the Staff Manage Profile add page
+@app.route('/Staff/ManageStaff/add')
+def add_staff():
+    return render_template('ManageStaffsAdd.html')
+
+# ! this will be the Gardner Manage Profile add page---to submit
+@app.route('/Staff/ManageStaff/add/submit', methods=['POST'])
+def add_staff_submit():
+    # 从表单获取数据
+    first_name = request.form.get('First_Name')
+    last_name = request.form.get('Last_Name')
+    username = first_name + last_name
+    email = request.form.get('Email')
+    workphonenumber = request.form.get('WorkPhoneNumber')
+
+    today_date = datetime.now().date()
+    midnight_today = datetime.combine(today_date, time())
+
+    position = request.form.get('Position')
+    department = request.form.get('Department')
+
+    hashed_password = hashing.hash_value("12345", salt='abcd')
+    # 连接数据库并插入新记录
+    # 注意：这里假设你已经建立了数据库连接
+    # 示例：cursor.execute("INSERT INTO gardner_profile (First_Name, ...) VALUES (%s, ...)", (first_name, ...))
+
+
+    cursor = getCursor()
+
+    cursor.execute("INSERT INTO secureaccount(UserName,password,email,role) VALUES (%s,%s,%s,%s)", (username,hashed_password,email,"Staff"))
+
+    secure_account_id = cursor.lastrowid
+
+    cursor.execute("INSERT INTO staff_admin(SecureAccountID, First_Name, Last_Name, Email,Work_Phone_number,Hire_date,Position,Department,Status) VALUES (%s, %s, %s, %s,%s,%s,%s,%s,%s)", (secure_account_id, first_name, last_name, email,workphonenumber,midnight_today,position,department,"Active"))
+
+
+        # 提交事务并关闭连接
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    # 重定向回园丁管理页面
+    return redirect(url_for('ManageStaffProfile'))
+
+
+
+
 # ! this will be the Gardner Manage Profile delete action
 @app.route('/delete-gardner/<int:gardner_id>', methods=['DELETE'])
 def deleteGardner(gardner_id):
@@ -491,6 +567,106 @@ def delete_gardner_and_account(gardner_id):
         connection.close()
         return False
 
+# ! this will be the Staff Manage Profile delete action
+@app.route('/delete-staff/<int:staff_id>', methods=['DELETE'])
+def deleteStaff(staff_id):
+
+    
+    result = delete_staff_and_account(staff_id)
+
+    if result:
+        return jsonify({'success': True}), 200
+    else:
+        return jsonify({'error': 'Deletion failed'}), 400
+
+
+
+def delete_staff_and_account(staff_id):
+    cursor = getCursor()
+    cursor.execute("SELECT * FROM staff_admin WHERE ID = %s", (staff_id,))
+    result = cursor.fetchone()
+
+    if result:
+        SecureAccountID = result['SecureAccountID']  # 提取secureaccount_id的值
+
+        if SecureAccountID is not None:
+            # 删除 admin_staff 表中的记录
+            cursor.execute("DELETE FROM staff_admin WHERE ID = %s", (staff_id,))
+            
+            # 删除 secureaccount 表中的记录
+            cursor.execute("DELETE FROM secureaccount WHERE id = %s", (SecureAccountID,))
+            connection.commit()
+
+        cursor.close()
+        connection.close()
+        return True
+    else:
+        cursor.close()
+        connection.close()
+        return False
+
+@app.route('/Staff/ManageGardenersProfile/edit/<int:gardner_id>')
+def edit_gardner(gardner_id):
+    # 这里添加获取指定 gardner_id 的园丁信息的逻辑
+    # 以及加载编辑表单页面的逻辑
+    cursor = getCursor()
+    cursor.execute("SELECT * FROM gardner_profile WHERE ID = %s", (gardner_id,))
+    gardner = cursor.fetchone()
+    return render_template('ManageGardnersEdit.html', gardner=gardner,gardner_id=gardner_id)
+
+
+@app.route('/Staff/ManageStaff/edit/<int:staff_id>')
+def edit_staff(staff_id):
+    # 这里添加获取指定 gardner_id 的园丁信息的逻辑
+    # 以及加载编辑表单页面的逻辑
+    cursor = getCursor()
+    cursor.execute("SELECT * FROM gardner_profile WHERE ID = %s", (staff_id,))
+    staff = cursor.fetchone()
+    return render_template('ManageStaffsEdit.html', staff=staff,staff_id=staff_id)
+
+
+
+@app.route('/update-staff/<int:staff_id>', methods=['POST'])
+def update_staff(staff_id):
+    first_name = request.form['First_Name']
+    last_name = request.form['Last_Name']
+    work_phone_number = request.form['Work_Phone_Number']
+    hire_date = request.form['Hire_Date']
+    position = request.form['Position']
+    department = request.form['Department']
+    status = request.form['Status']
+
+    cursor = getCursor()
+
+    # Check for duplicates
+    query = '''
+    SELECT * FROM staff_admin
+    WHERE phone_number = %s  AND ID != %s
+    '''
+    cursor.execute(query, (work_phone_number,staff_id,))
+    duplicate = cursor.fetchone()
+
+    if duplicate:
+        # If duplicate exists, pass a message to the frontend
+        message = "Duplicate record found. Please ensure the data is unique."
+        return render_template('ManageStaffssEdit.html', staff_id=staff_id, message=message)
+    else:
+        # If no duplicate, update the gardener's profile
+        update_query = '''
+        UPDATE staff_admin
+        SET First_Name = %s, Last_Name = %s, Work_Phone_number = %s, Hire_date = %s,Department = %s, Status = %s
+        WHERE ID = %s
+        '''
+        cursor.execute(update_query, (first_name, last_name, work_phone_number, hire_date,department, status, staff_id))
+        connection.commit()
+
+        positionRole = "Staff"
+        selectQuery = '''SELECT * FROM staff_admin WHERE Position = %s'''
+        cursor.execute(selectQuery, (positionRole,))
+        staffs = cursor.fetchall()
+        # Show the gardner profile page with account info
+        return render_template('ManageStaff.html',staffs=staffs)
+       
 
 
 if __name__ == '__main__':

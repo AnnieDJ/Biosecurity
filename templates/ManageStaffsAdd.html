@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add New Staff</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Add New Staff</h1>
+      <form action="{{ url_for('add_staff_submit') }}" method="post">
+        <div class="mb-3">
+          <label for="firstName" class="form-label">First Name:</label>
+          <input
+            type="text"
+            id="firstName"
+            name="First_Name"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="lastName" class="form-label">Last Name:</label>
+          <input
+            type="text"
+            id="lastName"
+            name="Last_Name"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="email" class="form-label">Email :</label>
+          <input
+            type="text"
+            id="email"
+            name="Email"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="workphonenumber" class="form-label"
+            >WorkPhone Number:</label
+          >
+          <input
+            type="text"
+            id="workphonenumber"
+            name="WorkPhoneNumber"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="position" class="form-label">Position:</label>
+          <input
+            type="text"
+            id="position"
+            name="Position"
+            class="form-control"
+            required
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+  </body>
+</html>

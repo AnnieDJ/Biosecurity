@@ -22,6 +22,7 @@
             <th>Phone Number</th>
             <th>Date Joined</th>
             <th>Status</th>
+            <th>Edit</th>
           </tr>
         </thead>
         <tbody>
@@ -41,10 +42,18 @@
             <td>{{ gardner.Phone_Number }}</td>
             <td>{{ gardner.Date_Joined }}</td>
             <td>{{ gardner.Status }}</td>
+            <td>
+              <!-- 编辑按钮，使用 url_for 生成带 gardner.ID 的 URL -->
+              <a
+                href="{{ url_for('edit_gardner', gardner_id=gardner.ID) }}"
+                class="btn btn-edit"
+                >Edit</a
+              >
+            </td>
           </tr>
           {% else %}
           <tr>
-            <td colspan="6">No gardeners found.</td>
+            <td colspan="7">No gardeners found.</td>
           </tr>
           {% endfor %}
         </tbody>
