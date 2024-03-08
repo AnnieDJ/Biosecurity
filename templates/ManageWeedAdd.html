@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add New Weed</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Add New Weed</h1>
+      <form
+        action="{{ url_for('add_weed_submit') }}"
+        method="post"
+        enctype="multipart/form-data"
+      >
+        <div class="mb-3">
+          <label for="commonName" class="form-label">Common Name:</label>
+          <input
+            type="text"
+            id="commonName"
+            name="common_name"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="scientificName" class="form-label"
+            >Scientific Name:</label
+          >
+          <input
+            type="text"
+            id="scientificName"
+            name="scientific_name"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="weedType" class="form-label">Weed Type:</label>
+          <input
+            type="text"
+            id="weedType"
+            name="weed_type"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="description" class="form-label">Description:</label>
+          <textarea
+            id="description"
+            name="description"
+            class="form-control"
+            required
+          ></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="impacts" class="form-label">Impacts:</label>
+          <textarea
+            id="impacts"
+            name="impacts"
+            class="form-control"
+            required
+          ></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="controlMethods" class="form-label"
+            >Control Methods:</label
+          >
+          <textarea
+            id="controlMethods"
+            name="control_methods"
+            class="form-control"
+            required
+          ></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="uploadMainImg" class="form-label"
+            >Upload Main Image:</label
+          >
+          <input
+            type="file"
+            id="uploadMainImg"
+            name="uploadMainImg"
+            class="form-control"
+          />
+        </div>
+        <div class="mb-3">
+          <label for="uploadImg1" class="form-label">Upload Image 1:</label>
+          <input
+            type="file"
+            id="uploadImg1"
+            name="uploadImg1"
+            class="form-control"
+          />
+        </div>
+        <div class="mb-3">
+          <label for="uploadImg2" class="form-label">Upload Image 2:</label>
+          <input
+            type="file"
+            id="uploadImg2"
+            name="uploadImg2"
+            class="form-control"
+          />
+        </div>
+        <div class="mb-3">
+          <label for="uploadImg3" class="form-label">Upload Image 3:</label>
+          <input
+            type="file"
+            id="uploadImg3"
+            name="uploadImg3"
+            class="form-control"
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+  </body>
+</html>

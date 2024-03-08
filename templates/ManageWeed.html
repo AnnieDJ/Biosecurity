@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Weed</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Manage Weed List</h1>
+      <a href="/Staff/ManageWeed/AddWeed" class="btn add-btn">Add New Weed</a>
+      <div class="weed-list">
+        {% for weed in weeds %}
+        <div class="weed-item">
+          <h2>{{ weed['common name'] }} ({{ weed['weed type'] }})</h2>
+          <a href="/Staff/ManageWeed/WeedDetail/{{ weed['id'] }}">
+            {% if weed['primary image'] %}
+            <img
+              src="{{ url_for('static', filename=weed['primary image']).replace('/static', '', 1) }}"
+              alt="Primary Image of {{ weed['common name'] }}"
+            />
+            {% else %}
+            <!-- Display a placeholder or no image -->
+            <img
+              src="{{ url_for('static', filename=weed['prImgLocalPath']).replace('/static', '', 1) }}"
+              alt="Primary Image of {{ weed['common name'] }}"
+            />
+            {% endif %}
+          </a>
+          <p>{{ weed['description'] | truncate(150) }}</p>
+          <!-- Optional: display a short description -->
+        </div>
+        {% else %}
+        <p>No weeds found.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </body>
+</html>

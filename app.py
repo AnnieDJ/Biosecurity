@@ -14,9 +14,11 @@ import connect
 from flask_hashing import Hashing
 import os
 import requests
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 hashing = Hashing(app)  #create an instance of hashing
+
 
 # Change this to your secret key (can be anything, it's for extra protection)
 app.secret_key = 'your secret key'
@@ -24,13 +26,20 @@ app.secret_key = 'your secret key'
 # Assume pic saving dir
 IMAGE_DIR = 'static/weed-images'
 
+app.config['UPLOAD_FOLDER'] = IMAGE_DIR
+
 dbconn = None
 connection = None
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+
 # define a function to download iamges if we don't have
 def download_image(image_url, scientific_name, image_type, weed_id):
+    # 如果URL为空，则不执行下载，并返回None或默认图片路径
     if not image_url:
-        return None  # 如果URL为空，则直接返回
+        print("No image URL provided for downloading.")
+        return None  # 或者返回默认图片路径，例如 'path/to/default/image.png'
     
     # 确保存储图片的目录存在
     os.makedirs(IMAGE_DIR, exist_ok=True)
@@ -44,8 +53,25 @@ def download_image(image_url, scientific_name, image_type, weed_id):
         "img3": "img3"
     }
     suffix = suffix_map.get(image_type, "unknown")
-    image_name = f"{valid_name}_{suffix}.png"
+    extension = image_url.rsplit('.', 1)[-1]  # 从URL获取文件扩展名
+    image_name = f"{valid_name}_{suffix}.{extension}"
     image_path = os.path.join(IMAGE_DIR, image_name).replace("\\", "/")
+    
+    # 检查图片是否已经存在
+    if os.path.exists(image_path):
+        print(f"Image already exists: {image_path}")
+        return image_path  # 如果图片已存在，直接返回路径
+    
+    # 尝试下载图片
+    try:
+        response = requests.get(image_url)
+        response.raise_for_status()  # 确保请求成功
+        with open(image_path, 'wb') as file:
+            file.write(response.content)
+        print(f"Image downloaded: {image_path}")
+    except requests.RequestException as e:
+        print(f"Error downloading {image_url}: {e}")
+        image_path = None  # 或者设置为默认图片路径，例如 'path/to/default/image.png'
     
     # 更新数据库中的图片路径
     field_map = {
@@ -55,7 +81,7 @@ def download_image(image_url, scientific_name, image_type, weed_id):
         "img3": "img3LocalPath"
     }
     field_name = field_map.get(image_type)
-    if field_name:
+    if field_name and image_path:
         try:
             cursor = getCursor()
             update_query = f"UPDATE weed_guide SET {field_name} = %s WHERE id = %s"
@@ -63,25 +89,58 @@ def download_image(image_url, scientific_name, image_type, weed_id):
             connection.commit()
         except mysql.connector.Error as err:
             print("Error updating database:", err)
-            return None
     
-    # 如果图片已存在，直接返回路径
-    if os.path.exists(image_path):
-        return image_path
-    
-    # 下载图片
-    try:
-        response = requests.get(image_url)
-        response.raise_for_status()  # 确保请求成功
-        with open(image_path, 'wb') as file:
-            file.write(response.content)
-        print(f"Image downloaded: {image_path}")
-        return image_path
-    except requests.RequestException as e:
-        print(f"Error downloading {image_url}: {e}")
-        return None
+    return image_path
 
-    
+
+# check if file category is Images   
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/Staff/ManageWeed/AddWeed/submit', methods=['POST'])
+def add_weed_submit():
+    if request.method == 'POST':
+        common_name = request.form['common_name']
+        scientific_name = request.form['scientific_name']
+        weed_type = request.form['weed_type']
+        description = request.form['description']
+        impacts = request.form['impacts']
+        control_methods = request.form['control_methods']
+
+        # 格式化科学名称以用于文件名
+        formatted_sci_name = re.sub(r'[^\w\-_\.]', '_', scientific_name)
+
+        # 初始化路径列表
+        image_paths = {'uploadMainImg': None, 'uploadImg1': None, 'uploadImg2': None, 'uploadImg3': None}
+
+        # 处理上传的图片
+        for image_field in ['uploadMainImg', 'uploadImg1', 'uploadImg2', 'uploadImg3']:
+            file = request.files[image_field]
+            if file and allowed_file(file.filename):
+                # 获取文件扩展名
+                extension = file.filename.rsplit('.', 1)[1].lower()
+                # 根据字段名称确定文件名
+                if image_field == 'uploadMainImg':
+                    filename = f"{formatted_sci_name}_primaryimg.{extension}"
+                else:
+                    suffix = image_field[-1]  # 获取最后一个字符，即数字
+                    filename = f"{formatted_sci_name}_img{suffix}.{extension}"
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                # 保存文件
+                file.save(file_path)
+                image_paths[image_field] = file_path.replace("\\", "/")
+
+        cursor = getCursor()
+        cursor.execute('''INSERT INTO weed_guide (`common name`, `scientific name`, `weed type`, `description`, `impacts`, `control methods`, `prImgLocalPath`, `img1LocalPath`, `img2LocalPath`, `img3LocalPath`)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                       (common_name, scientific_name, weed_type, description, impacts, control_methods, image_paths['uploadMainImg'], image_paths['uploadImg1'], image_paths['uploadImg2'], image_paths['uploadImg3']))
+        connection.commit()
+
+        return redirect(url_for('ManageWeed'))
+
+
+
 def getCursor():
     global dbconn
     global connection
@@ -276,13 +335,29 @@ def showWeedlist():
     cursor.execute('SELECT `id`, `common name`, `weed type`, `primary image`, `scientific name`, `description`, `impacts`, `control methods`, `image1`, `image2`, `image3` FROM weed_guide')
     weeds = cursor.fetchall()
     
-    # 对每个杂草条目，下载图片并更新图片路径
+    # 对每个杂草条目，检查图片是否存在，如果存在则尝试下载并更新图片路径
     for weed in weeds:
         # 确保传递weed['id']给download_image函数
-        weed['primary image'] = download_image(weed['primary image'], weed['scientific name'], "primary", weed['id'])
-        weed['image1'] = download_image(weed['image1'], weed['scientific name'], "img1", weed['id'])
-        weed['image2'] = download_image(weed['image2'], weed['scientific name'], "img2", weed['id'])
-        weed['image3'] = download_image(weed['image3'], weed['scientific name'], "img3", weed['id'])
+        # 对于每个图像，检查URL是否为空
+        if weed['primary image']:
+            weed['primary image'] = download_image(weed['primary image'], weed['scientific name'], "primary", weed['id'])
+        else:
+            weed['primary image'] = None  # 或设置为默认图片路径
+        
+        if weed['image1']:
+            weed['image1'] = download_image(weed['image1'], weed['scientific name'], "img1", weed['id'])
+        else:
+            weed['image1'] = None  # 或设置为默认图片路径
+        
+        if weed['image2']:
+            weed['image2'] = download_image(weed['image2'], weed['scientific name'], "img2", weed['id'])
+        else:
+            weed['image2'] = None  # 或设置为默认图片路径
+        
+        if weed['image3']:
+            weed['image3'] = download_image(weed['image3'], weed['scientific name'], "img3", weed['id'])
+        else:
+            weed['image3'] = None  # 或设置为默认图片路径
     
     return render_template('Weedlist.html', weeds=weeds)
 
@@ -352,13 +427,46 @@ def ManageStaffProfile():
         # Show the gardner profile page with account info
         return render_template('ManageStaff.html',staffs=staffs)
 
-
+# ! staff/ManageWeed - this will be the Staff or Adminstrator Manage Weed page
 @app.route('/Staff/ManageWeed')
 def ManageWeed():
-        cursor = getCursor()
+    cursor = getCursor()
+    cursor.execute('SELECT `id`, `common name`, `weed type`, `primary image`, `scientific name`, `description`, `impacts`, `control methods`, `image1`, `image2`, `image3` ,`prImgLocalPath`,`img1LocalPath`,`img2LocalPath`,`img3LocalPath`FROM weed_guide')
+    weeds = cursor.fetchall()
+    
+    # 对每个杂草条目，检查图片是否存在，如果存在则尝试下载并更新图片路径
+    for weed in weeds:
+        # 确保传递weed['id']给download_image函数
+        # 对于每个图像，检查URL是否为空
+        if weed['primary image']:
+            weed['primary image'] = download_image(weed['primary image'], weed['scientific name'], "primary", weed['id'])
+        else:
+            weed['primary image'] = weed['prImgLocalPath']  # 或设置为默认图片路径
+        
+        if weed['image1']:
+            weed['image1'] = download_image(weed['image1'], weed['scientific name'], "img1", weed['id'])
+        else:
+            weed['image1'] = weed['img1LocalPath']  # 或设置为默认图片路径
+        
+        if weed['image2']:
+            weed['image2'] = download_image(weed['image2'], weed['scientific name'], "img2", weed['id'])
+        else:
+            weed['image2'] = weed['img2LocalPath']  # 或设置为默认图片路径
+        
+        if weed['image3']:
+            weed['image3'] = download_image(weed['image3'], weed['scientific name'], "img3", weed['id'])
+        else:
+            weed['image3'] = weed['img2LocalPath']  # 或设置为默认图片路径
+    
+    return render_template('ManageWeed.html', weeds=weeds)
 
-        # Show the gardner profile page with account info
-        return render_template('ManageWeed.html')
+
+# ! staff/ManageWeed - this will be the Staff or Adminstrator Manage Weed  add page
+@app.route('/Staff/ManageWeed/AddWeed')
+def ManageWeedAdd():
+
+    return render_template('ManageWeedAdd.html')
+
 
 
 
