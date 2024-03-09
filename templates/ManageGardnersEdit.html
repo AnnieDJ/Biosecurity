@@ -1,41 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edit Gardener</title>
-  </head>
-  <body>
-    <h1>Edit Gardener Profile</h1>
-    {% if message %}
-    <p style="color: red">{{ message }}</p>
-    {% endif %}
-    <form
-      action="{{ url_for('update_gardener', gardner_id=gardner_id) }}"
-      method="POST"
-    >
-      <label for="First_Name">First Name:</label>
-      <input type="text" id="First_Name" name="First_Name" required />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <style>
+      .navbar .nav-link,
+      .navbar .btn {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: xx-large;
+        font-weight: bold;
+        color: #ffffff !important;
+      }
+      .navbar li {
+        margin-right: 40px;
+      }
+      .navbar li a:hover {
+        border-bottom: 2px solid #b1adad;
+        color: #17beb1;
+      }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg" style="background-color: #237a4a">
+        <!-- Navbar content similar to ManageGardners.html -->
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="{{ url_for('ManageGardenerProfile') }}">Go Back</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-      <label for="Last_Name">Last Name:</label>
-      <input type="text" id="Last_Name" name="Last_Name" required />
+    <div class="container mt-5">
+        <h1>Edit Gardener Profile</h1>
+        {% if message %}
+        <p style="color: red">{{ message }}</p>
+        {% endif %}
+        <form action="{{ url_for('update_gardener', gardner_id=gardner_id) }}" method="POST">
+            <div class="mb-3">
+                <label for="First_Name" class="form-label">First Name:</label>
+                <input type="text" class="form-control" id="First_Name" name="First_Name" value="{{ gardner.First_Name }}" required>
+            </div>
 
-      <label for="Address">Address:</label>
-      <input type="text" id="Address" name="Address" required />
+            <div class="mb-3">
+                <label for="Last_Name" class="form-label">Last Name:</label>
+                <input type="text" class="form-control" id="Last_Name" name="Last_Name" value="{{ gardner.Last_Name }}" required>
+            </div>
 
-      <label for="Phone_Number">Phone Number:</label>
-      <input type="text" id="Phone_Number" name="Phone_Number" required />
+            <div class="mb-3">
+                <label for="Address" class="form-label">Address:</label>
+                <input type="text" class="form-control" id="Address" name="Address" value="{{ gardner.Address }}" required>
+            </div>
 
-      <label for="Status">Status:</label>
-      <select id="Status" name="Status">
-        <option value="Active">Active</option>
-        <option value="Inactive">Inactive</option>
-      </select>
+            <div class="mb-3">
+                <label for="Phone_Number" class="form-label">Phone Number:</label>
+                <input type="text" class="form-control" id="Phone_Number" name="Phone_Number" value="{{ gardner.Phone_Number }}" required>
+            </div>
 
-      <!-- Display-only fields -->
-      <p>Email: {{gardner.Email}}</p>
-      <p>Date Joined: {{gardner.Date_Joined}}</p>
+            <div class="mb-3">
+                <label for="Status" class="form-label">Status:</label>
+                <select class="form-select" id="Status" name="Status">
+                  <option value="Active" {% if gardner.Status == "Active" %}selected{% endif %}>Active</option>
+                  <option value="Inactive" {% if gardner.Status == "Inactive" %}selected{% endif %}>Inactive</option>
+              </select>
+              
+            </div>
 
-      <button type="submit">Update</button>
-    </form>
-  </body>
+            <div class="mb-3">
+                <label class="form-label">Email (readonly):</label>
+                <input type="text" class="form-control" value="{{ gardner.Email }}" readonly>
+            </div>
+
+            <div class="mb-3">
+                <label for="Date_Joined" class="form-label">Date Joined:</label>
+                <input type="date" class="form-control" id="Date_Joined" name="Date_Joined" value="{{ gardner.Date_Joined.strftime('%Y-%m-%d') }}">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Update</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </html>

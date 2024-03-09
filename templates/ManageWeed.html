@@ -3,20 +3,90 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Manage Weed</title>
+    <title>Manage Weed List</title>
+
     <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
     />
+    <style>
+      .navbar .nav-link,
+      .navbar .btn {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: xx-large;
+        font-weight: bold;
+        color: #ffffff !important;
+      }
+      .navbar li {
+        margin-right: 40px;
+      }
+      .navbar li a:hover {
+        border-bottom: 2px solid #b1adad;
+        color: #17beb1;
+      }
+      .btn.add-btn:hover {
+        background-color: red;
+        border-color: red;
+      }
+    </style>
   </head>
   <body>
+    <nav class="navbar navbar-expand-lg" style="background-color: #237a4a">
+      <div class="container-fluid">
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div
+          class="collapse navbar-collapse justify-content-between"
+          id="navbarCenteredContent"
+        >
+          <ul class="navbar-nav mx-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('staff') }}">Go Back</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
     <div class="container">
       <h1>Manage Weed List</h1>
-      <a href="/Staff/ManageWeed/AddWeed" class="btn add-btn">Add New Weed</a>
+      <div class="addweedbutton">
+        <a href="/Staff/ManageWeed/AddWeed" class="btn btn-primary add-btn"
+          >Add New Weed</a
+        >
+      </div>
       <div class="weed-list">
         {% for weed in weeds %}
         <div class="weed-item">
-          <h2>{{ weed['common name'] }} ({{ weed['weed type'] }})</h2>
+          <div class="d-flex justify-content-between align-items-center">
+            <h2>{{ weed['common name'] }} ({{ weed['weed type'] }})</h2>
+            <!-- Add the Edit button here -->
+            <a
+              href="{{ url_for('edit_weed', weed_id=weed['id']) }}"
+              class="btn btn-secondary"
+              >Edit</a
+            >
+
+            <a
+              href="javascript:void(0);"
+              class="btn btn-danger delete-btn"
+              onclick="deleteWeed({{ weed['id'] }})"
+              >Delete</a
+            >
+          </div>
           <a href="/Staff/ManageWeed/WeedDetail/{{ weed['id'] }}">
             {% if weed['primary image'] %}
             <img
@@ -39,5 +109,25 @@
         {% endfor %}
       </div>
     </div>
+    <script>
+      function deleteWeed(weedId) {
+        if (confirm("Are you sure you want to delete this weed?")) {
+          fetch(`/delete_weed/${weedId}`, {
+            method: "DELETE",
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                window.location.reload(); // 删除成功后刷新页面
+              } else {
+                alert("Failed to delete weed");
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        }
+      }
+    </script>
   </body>
 </html>

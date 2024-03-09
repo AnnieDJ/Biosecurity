@@ -92,6 +92,64 @@ def download_image(image_url, scientific_name, image_type, weed_id):
     
     return image_path
 
+# ! for upload weed edit images
+@app.route('/upload_image', methods=['POST'])
+def upload_image():
+    weed_id = request.form['weedId']
+    image_type = request.form['imageType']  # 图片类型
+    file = request.files['image']
+
+    if file and allowed_file(file.filename):
+        cursor = getCursor()
+        cursor.execute("SELECT `scientific name` FROM weed_guide WHERE id = %s", (weed_id,))
+        weed = cursor.fetchone()
+
+        if not weed:
+            return jsonify({'error': 'Weed not found'}), 404
+
+               # 初始化finalString为空字符串
+        correctString = ''
+        # 根据image_type设定正确的数据库字段名
+        if image_type == 'primary image':
+            correctString = 'primaryimg'
+        elif image_type == 'image1':
+            correctString = 'img1'
+        elif image_type == 'image2':
+            correctString = 'img2'
+        elif image_type == 'image3':
+            correctString = 'img3'
+
+        scientific_name = weed['scientific name']
+        filename = f"{scientific_name}_{correctString}.{file.filename.rsplit('.', 1)[1]}"
+        save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename).replace("\\", "/")
+
+        file.save(save_path)
+        
+        # 初始化finalString为空字符串
+        finalString = ''
+        # 根据image_type设定正确的数据库字段名
+        if image_type == 'primary image':
+            finalString = 'prImgLocalPath'
+        elif image_type == 'image1':
+            finalString = 'img1LocalPath'
+        elif image_type == 'image2':
+            finalString = 'img2LocalPath'
+        elif image_type == 'image3':
+            finalString = 'img3LocalPath'
+
+        # 使用finalString构建更新查询
+        if finalString:
+            update_query = f"UPDATE weed_guide SET {finalString} = %s WHERE id = %s"
+            cursor.execute(update_query, (os.path.join('static/weed-images', filename).replace("\\", "/"), weed_id))
+            connection.commit()
+
+            return jsonify({'success': 'Image upload success!'}), 200
+        else:
+            return jsonify({'error': 'Invalid image type provided'}), 400
+    else:
+        return jsonify({'error': 'Invalid file type or no file uploaded'}), 400
+
+
 
 # check if file category is Images   
 def allowed_file(filename):
@@ -332,7 +390,7 @@ def showGardnerUserProfile():
 @app.route('/GardnerUser/Weedlist')
 def showWeedlist():
     cursor = getCursor()
-    cursor.execute('SELECT `id`, `common name`, `weed type`, `primary image`, `scientific name`, `description`, `impacts`, `control methods`, `image1`, `image2`, `image3` FROM weed_guide')
+    cursor.execute('SELECT `id`, `common name`, `weed type`, `primary image`, `scientific name`, `description`, `impacts`, `control methods`, `image1`, `image2`, `image3` ,`prImgLocalPath`,`img1LocalPath`,`img2LocalPath`,`img3LocalPath`FROM weed_guide')
     weeds = cursor.fetchall()
     
     # 对每个杂草条目，检查图片是否存在，如果存在则尝试下载并更新图片路径
@@ -342,22 +400,22 @@ def showWeedlist():
         if weed['primary image']:
             weed['primary image'] = download_image(weed['primary image'], weed['scientific name'], "primary", weed['id'])
         else:
-            weed['primary image'] = None  # 或设置为默认图片路径
+            weed['primary image'] = weed['prImgLocalPath']  # 或设置为默认图片路径
         
         if weed['image1']:
             weed['image1'] = download_image(weed['image1'], weed['scientific name'], "img1", weed['id'])
         else:
-            weed['image1'] = None  # 或设置为默认图片路径
+            weed['image1'] = weed['img1LocalPath']  # 或设置为默认图片路径
         
         if weed['image2']:
             weed['image2'] = download_image(weed['image2'], weed['scientific name'], "img2", weed['id'])
         else:
-            weed['image2'] = None  # 或设置为默认图片路径
+            weed['image2'] = weed['img2LocalPath']  # 或设置为默认图片路径
         
         if weed['image3']:
             weed['image3'] = download_image(weed['image3'], weed['scientific name'], "img3", weed['id'])
         else:
-            weed['image3'] = None  # 或设置为默认图片路径
+            weed['image3'] = weed['img3LocalPath']  # 或设置为默认图片路径
     
     return render_template('Weedlist.html', weeds=weeds)
 
@@ -372,6 +430,28 @@ def weed_detail(weed_id):
         return render_template('WeedDetail.html', weed=weed)
     else:
         return 'Weed not found', 404
+
+
+@app.route('/Staff/ManageWeed/EditWeed/<int:weed_id>', methods=['GET', 'POST'])
+def edit_weed(weed_id):
+    # Your logic here to fetch the weed details and handle form submission for editing
+    
+    cursor = getCursor()
+    cursor.execute("SELECT * FROM weed_guide WHERE ID = %s", (weed_id,))
+    weed = cursor.fetchone()
+    return render_template('ManageWeedEdit.html', weed=weed,weed_id=weed_id)
+    
+    
+@app.route('/delete_weed/<int:weed_id>', methods=['DELETE'])
+def delete_weed(weed_id):
+    cursor = getCursor()
+    try:
+        cursor.execute("DELETE FROM weed_guide WHERE id = %s", (weed_id,))
+        connection.commit()
+        return jsonify({'success': 'Weed deleted successfully'}), 200
+    except mysql.connector.Error as err:
+        print(f"Error deleting weed: {err}")
+        return jsonify({'error': 'Failed to delete weed'}), 500
 
 
 # http://localhost:5000/Staff - this will be the Staff page
@@ -725,13 +805,45 @@ def edit_gardner(gardner_id):
 
 @app.route('/Staff/ManageStaff/edit/<int:staff_id>')
 def edit_staff(staff_id):
-    # 这里添加获取指定 gardner_id 的园丁信息的逻辑
+    # 这里添加获取指定 gardner_id 的员工信息的逻辑
     # 以及加载编辑表单页面的逻辑
     cursor = getCursor()
-    cursor.execute("SELECT * FROM gardner_profile WHERE ID = %s", (staff_id,))
+    cursor.execute("SELECT * FROM staff_admin WHERE ID = %s", (staff_id,))
     staff = cursor.fetchone()
     return render_template('ManageStaffsEdit.html', staff=staff,staff_id=staff_id)
 
+
+@app.route('/update_weed/<int:weed_id>', methods=['POST'])
+def update_weed(weed_id):
+    # 从表单中获取数据
+    common_name = request.form.get('common name')
+    scientific_name = request.form.get('scientific name')
+    weed_type = request.form.get('weed type')
+    description = request.form.get('description')
+    impact = request.form.get('impact')
+    control_methods = request.form.get('control methods')
+
+    # 连接数据库
+    cursor = getCursor()
+
+    # 准备更新SQL语句
+    sql = '''
+        UPDATE weed_guide
+        SET `common name` = %s, `scientific name` = %s, `weed type` = %s, 
+            `description` = %s, `impacts` = %s, `control methods` = %s
+        WHERE id = %s
+    '''
+    values = (common_name, scientific_name, weed_type, description, impact, control_methods, weed_id)
+
+    try:
+        # 执行SQL语句并提交到数据库
+        cursor.execute(sql, values)
+        connection.commit()
+        return redirect(url_for('ManageWeed'))
+    except mysql.connector.Error as err:
+        print(f"Error updating weed record: {err}")
+        # 可以根据需要返回错误信息或重定向到错误页面
+        return redirect(url_for('edit_weed', weed_id=weed_id, message="Failed to update weed information. Please try again."))
 
 
 @app.route('/update-staff/<int:staff_id>', methods=['POST'])
@@ -740,7 +852,6 @@ def update_staff(staff_id):
     last_name = request.form['Last_Name']
     work_phone_number = request.form['Work_Phone_Number']
     hire_date = request.form['Hire_Date']
-    position = request.form['Position']
     department = request.form['Department']
     status = request.form['Status']
 
@@ -749,7 +860,7 @@ def update_staff(staff_id):
     # Check for duplicates
     query = '''
     SELECT * FROM staff_admin
-    WHERE phone_number = %s  AND ID != %s
+    WHERE Work_Phone_number = %s  AND ID != %s
     '''
     cursor.execute(query, (work_phone_number,staff_id,))
     duplicate = cursor.fetchone()
@@ -757,7 +868,7 @@ def update_staff(staff_id):
     if duplicate:
         # If duplicate exists, pass a message to the frontend
         message = "Duplicate record found. Please ensure the data is unique."
-        return render_template('ManageStaffssEdit.html', staff_id=staff_id, message=message)
+        return render_template('ManageStaffsEdit.html', staff_id=staff_id, message=message)
     else:
         # If no duplicate, update the gardener's profile
         update_query = '''
@@ -775,6 +886,40 @@ def update_staff(staff_id):
         # Show the gardner profile page with account info
         return render_template('ManageStaff.html',staffs=staffs)
        
+
+# ! Edit Gardner Profile       
+@app.route('/Staff/ManageGardenersProfile/update/<int:gardner_id>', methods=['POST'])
+def update_gardener(gardner_id):
+    # Extracting form data
+    first_name = request.form['First_Name']
+    last_name = request.form['Last_Name']
+    address = request.form['Address']
+    phone_number = request.form['Phone_Number']
+    status = request.form['Status']
+    # Assuming Date_Joined is part of the form and formatted as 'YYYY-MM-DD'
+    date_joined = request.form['Date_Joined']
+
+    # Database connection and cursor
+    cursor = getCursor()
+
+    # Preparing the SQL query to update gardener's profile
+    update_query = '''
+        UPDATE gardner_profile
+        SET First_Name = %s, Last_Name = %s, Address = %s, Phone_Number = %s, Status = %s, Date_Joined = %s
+        WHERE ID = %s
+    '''
+    
+    try:
+        # Executing the update query
+        cursor.execute(update_query, (first_name, last_name, address, phone_number, status, date_joined, gardner_id))
+        connection.commit()
+        # Redirecting to the gardener profile management page or showing success message
+        return redirect(url_for('ManageGardenerProfile'))
+    except mysql.connector.Error as err:
+        # Handling potential errors and redirecting back to the edit page with an error message
+        print(f"Error updating gardener's profile: {err}")
+        # Optional: Pass a message back to the editing page about the error
+        return redirect(url_for('edit_gardner', gardner_id=gardner_id, message="Failed to update profile. Please try again."))
 
 
 if __name__ == '__main__':
