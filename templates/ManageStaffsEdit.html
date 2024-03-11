@@ -92,11 +92,73 @@
               </select>
               
             </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">New Password:</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  class="form-control"
+                  required
+                  minlength="5"
+                  placeholder="Enter a password"
+                  aria-describedby="passwordHelpBlock"
+                />
+                <div id="passwordHelpBlock" class="form-text">
+                  Password must be at least 5 characters long.
+                </div>
 
             <button type="submit" class="btn btn-primary">Update</button>
         </form>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+          const form = document.querySelector("form");
+          const firstNameInput = document.getElementById("First_Name");
+          const lastNameInput = document.getElementById("Last_Name");
+          const departmentInput = document.getElementById("Department");
+          const workPhoneNumberInput = document.getElementById("Work_Phone_Number");
+      
+          form.addEventListener("submit", function(e) {
+            const nameRegex = /^[A-Za-z\s]+$/; // 允许字母和空格
+            const phoneRegex = /^\d+$/; // 仅允许数字
+      
+            // 验证First Name是否只包含字母
+            if (!nameRegex.test(firstNameInput.value)) {
+              e.preventDefault();
+              alert("First Name should only contain letters.");
+              firstNameInput.focus();
+              return;
+            }
+      
+            // 验证Last Name是否只包含字母
+            if (!nameRegex.test(lastNameInput.value)) {
+              e.preventDefault();
+              alert("Last Name should only contain letters.");
+              lastNameInput.focus();
+              return;
+            }
+      
+            // 验证Department是否只包含字母
+            if (!nameRegex.test(departmentInput.value)) {
+              e.preventDefault();
+              alert("Department should only contain letters.");
+              departmentInput.focus();
+              return;
+            }
+      
+            // 验证WorkPhone Number是否只包含数字
+            if (!phoneRegex.test(workPhoneNumberInput.value)) {
+              e.preventDefault();
+              alert("Work Phone Number should only contain numbers.");
+              workPhoneNumberInput.focus();
+              return;
+            }
+          });
+        });
+      </script>
+      
 </body>
 </html>

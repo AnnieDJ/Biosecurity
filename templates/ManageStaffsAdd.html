@@ -105,16 +105,6 @@
           />
         </div>
         <div class="mb-3">
-          <label for="position" class="form-label">Position:</label>
-          <input
-            type="text"
-            id="position"
-            name="Position"
-            class="form-control"
-            required
-          />
-        </div>
-        <div class="mb-3">
           <label for="department" class="form-label">Department:</label>
           <input
             type="text"
@@ -124,8 +114,67 @@
             required
           />
         </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password:</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-control"
+            required
+            minlength="5"
+            placeholder="Enter a password"
+            aria-describedby="passwordHelpBlock"
+          />
+          <div id="passwordHelpBlock" class="form-text">
+            Password must be at least 5 characters long.
+          </div>
         <button type="submit" class="btn btn-primary">Submit</button>
       </form>
     </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector("form");
+        const firstNameInput = document.getElementById("firstName");
+        const lastNameInput = document.getElementById("lastName");
+        const workPhoneNumberInput = document.getElementById("workphonenumber");
+        const emailInput = document.getElementById("email");
+
+        form.addEventListener("submit", function (e) {
+          // 验证First Name和Last Name只包含字母
+          const nameRegex = /^[A-Za-z\s]+$/; // 允许空格以支持多个单词的名字
+          if (!nameRegex.test(firstNameInput.value)) {
+            e.preventDefault();
+            alert("First Name should only contain letters.");
+            firstNameInput.focus();
+            return;
+          }
+          if (!nameRegex.test(lastNameInput.value)) {
+            e.preventDefault();
+            alert("Last Name should only contain letters.");
+            lastNameInput.focus();
+            return;
+          }
+
+          // 验证WorkPhone Number只包含数字
+          const phoneRegex = /^\d+$/;
+          if (!phoneRegex.test(workPhoneNumberInput.value)) {
+            e.preventDefault();
+            alert("Work Phone Number should only contain numbers.");
+            workPhoneNumberInput.focus();
+            return;
+          }
+
+          // 验证Email地址
+          const emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
+          if (!emailRegex.test(emailInput.value)) {
+            e.preventDefault();
+            alert("Please enter a valid Email address.");
+            emailInput.focus();
+            return;
+          }
+        });
+      });
+    </script>
   </body>
 </html>

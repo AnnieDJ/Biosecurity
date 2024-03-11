@@ -15,6 +15,7 @@ from flask_hashing import Hashing
 import os
 import requests
 from werkzeug.utils import secure_filename
+from flask import flash
 
 app = Flask(__name__)
 hashing = Hashing(app)  #create an instance of hashing
@@ -36,16 +37,16 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 # define a function to download iamges if we don't have
 def download_image(image_url, scientific_name, image_type, weed_id):
-    # 如果URL为空，则不执行下载，并返回None或默认图片路径
+     # If the URL is empty, do not perform the download and return None or the default image path
     if not image_url:
         print("No image URL provided for downloading.")
         return None  # 或者返回默认图片路径，例如 'path/to/default/image.png'
     
-    # 确保存储图片的目录存在
+    # Ensure the directory for storing images exists
     os.makedirs(IMAGE_DIR, exist_ok=True)
     
-    # 根据scientific name和image_type构造图片文件名
-    valid_name = re.sub(r'[^\w\-_\.]', '_', scientific_name)  # 移除不合法的文件名字符
+    # Construct the image file name based on the scientific name and image type
+    valid_name = re.sub(r'[^\w\-_\.]', '_', scientific_name)  # Remove illegal file name characters
     suffix_map = {
         "primary": "primaryimg",
         "img1": "img1",
@@ -53,27 +54,27 @@ def download_image(image_url, scientific_name, image_type, weed_id):
         "img3": "img3"
     }
     suffix = suffix_map.get(image_type, "unknown")
-    extension = image_url.rsplit('.', 1)[-1]  # 从URL获取文件扩展名
+    extension = image_url.rsplit('.', 1)[-1]  # Get file extension from URL
     image_name = f"{valid_name}_{suffix}.{extension}"
     image_path = os.path.join(IMAGE_DIR, image_name).replace("\\", "/")
     
-    # 检查图片是否已经存在
+    # Check if the image already exists
     if os.path.exists(image_path):
         print(f"Image already exists: {image_path}")
-        return image_path  # 如果图片已存在，直接返回路径
+        return image_path   # If the image already exists, directly return the path
     
-    # 尝试下载图片
+    # Attempt to download the image
     try:
         response = requests.get(image_url)
-        response.raise_for_status()  # 确保请求成功
+        response.raise_for_status()  # Ensure the request was successful
         with open(image_path, 'wb') as file:
             file.write(response.content)
         print(f"Image downloaded: {image_path}")
     except requests.RequestException as e:
         print(f"Error downloading {image_url}: {e}")
-        image_path = None  # 或者设置为默认图片路径，例如 'path/to/default/image.png'
+        image_path = None  # Or set to default image path
     
-    # 更新数据库中的图片路径
+     # Update the image path in the database
     field_map = {
         "primary": "prImgLocalPath",
         "img1": "img1LocalPath",
@@ -96,7 +97,7 @@ def download_image(image_url, scientific_name, image_type, weed_id):
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
     weed_id = request.form['weedId']
-    image_type = request.form['imageType']  # 图片类型
+    image_type = request.form['imageType']  # Image type
     file = request.files['image']
 
     if file and allowed_file(file.filename):
@@ -107,9 +108,9 @@ def upload_image():
         if not weed:
             return jsonify({'error': 'Weed not found'}), 404
 
-               # 初始化finalString为空字符串
+               # Initialize correctString as an empty string
         correctString = ''
-        # 根据image_type设定正确的数据库字段名
+        # Set the correct database field name based on the image type
         if image_type == 'primary image':
             correctString = 'primaryimg'
         elif image_type == 'image1':
@@ -125,9 +126,9 @@ def upload_image():
 
         file.save(save_path)
         
-        # 初始化finalString为空字符串
+         # Initialize finalString as an empty string
         finalString = ''
-        # 根据image_type设定正确的数据库字段名
+        # Set the correct database field name based on the image type
         if image_type == 'primary image':
             finalString = 'prImgLocalPath'
         elif image_type == 'image1':
@@ -137,7 +138,7 @@ def upload_image():
         elif image_type == 'image3':
             finalString = 'img3LocalPath'
 
-        # 使用finalString构建更新查询
+        # Build update query using finalString
         if finalString:
             update_query = f"UPDATE weed_guide SET {finalString} = %s WHERE id = %s"
             cursor.execute(update_query, (os.path.join('static/weed-images', filename).replace("\\", "/"), weed_id))
@@ -166,26 +167,26 @@ def add_weed_submit():
         impacts = request.form['impacts']
         control_methods = request.form['control_methods']
 
-        # 格式化科学名称以用于文件名
+      # Format the scientific name for use in filenames
         formatted_sci_name = re.sub(r'[^\w\-_\.]', '_', scientific_name)
 
-        # 初始化路径列表
+         # Initialize a list for paths
         image_paths = {'uploadMainImg': None, 'uploadImg1': None, 'uploadImg2': None, 'uploadImg3': None}
 
-        # 处理上传的图片
+        # Handle uploaded images
         for image_field in ['uploadMainImg', 'uploadImg1', 'uploadImg2', 'uploadImg3']:
             file = request.files[image_field]
             if file and allowed_file(file.filename):
-                # 获取文件扩展名
+                # Get file extension
                 extension = file.filename.rsplit('.', 1)[1].lower()
-                # 根据字段名称确定文件名
+                # Determine filename based on field name
                 if image_field == 'uploadMainImg':
                     filename = f"{formatted_sci_name}_primaryimg.{extension}"
                 else:
-                    suffix = image_field[-1]  # 获取最后一个字符，即数字
+                    suffix = image_field[-1]   # Get the last character, i.e., the number
                     filename = f"{formatted_sci_name}_img{suffix}.{extension}"
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                # 保存文件
+                # Save the file
                 file.save(file_path)
                 image_paths[image_field] = file_path.replace("\\", "/")
 
@@ -205,7 +206,7 @@ def getCursor():
     connection = mysql.connector.connect(user=connect.dbuser, \
     password=connect.dbpass, host=connect.dbhost, auth_plugin='mysql_native_password ',\
     database=connect.dbname, autocommit=True)
-    #Setting use dictionary true
+     # Set use dictionary true
     dbconn = connection.cursor(dictionary=True)
     return dbconn
 
@@ -216,9 +217,9 @@ def index():
     Redirect to the login page if the user is not logged in,
     otherwise redirect to the user's home page.
     """
-    # 检查用户是否已经登录，这里假设你在登录后会设置 session['loggedin']
+    # Check if the user is already logged in, assuming session['loggedin'] is set upon login
     if 'loggedin' in session:
-        # 根据用户的角色重定向到不同的首页
+        # Redirect to different home pages based on the user's role
         if session['role'] == 'Staff':
             return redirect(url_for('staff'))
         elif session['role'] == 'Administration':
@@ -226,7 +227,7 @@ def index():
         else:
             return redirect(url_for('gardner_user'))
     else:
-        # 如果用户未登录，重定向到登录页面
+        # If the user is not logged in, redirect to the login page
         return redirect(url_for('login'))
 
 
@@ -262,11 +263,29 @@ def login():
                 session['email']=account['email']
                 # Redirect to home page
                 if account['role']=="Staff":
-                    return redirect(url_for('staff'))
+                    cursor.execute('SELECT * FROM staff_admin WHERE SecureAccountID = %s', (account['id'],))
+                    staffinfo = cursor.fetchone()
+                    if staffinfo['Status'] == 'Active':
+                        return redirect(url_for('staff'))
+                    else:
+                        flash(f'Account {account["username"]} is not active,please contact your administrator!')
+                        return render_template('login.html')
                 elif account['role']=="Administration":
-                    return redirect(url_for('staff'))
+                    cursor.execute('SELECT * FROM staff_admin WHERE SecureAccountID = %s', (account['id'],))
+                    gardnerinfo = cursor.fetchone()
+                    if gardnerinfo['Status'] == 'Active':
+                        return redirect(url_for('staff'))
+                    else:
+                        flash(f'Account {account["username"]} is not active,please contact your administrator!')
+                        return render_template('login.html')
                 else:
-                     return redirect(url_for('gardner_user'))
+                    cursor.execute('SELECT * FROM gardner_profile WHERE secureaccount_id = %s', (account['id'],))
+                    gardnerinfo = cursor.fetchone()
+                    if gardnerinfo['Status'] == 'Active':
+                        return redirect(url_for('gardner_user'))
+                    else:
+                        flash(f'Account {account["username"]} is not active,please contact your administrator!')
+                        return render_template('login.html')
             else:
                 #password incorrect
                 msg = 'Incorrect password!'
@@ -320,7 +339,14 @@ def register():
         else:
             # Account doesnt exists and the form data is valid, now insert new account into accounts table
             hashed = hashing.hash_value(password, salt='abcd')
-            cursor.execute('INSERT INTO secureaccount VALUES (NULL, %s, %s, %s)', (username, hashed, email,))
+            cursor.execute('INSERT INTO secureaccount(UserName,password,email,role) VALUES ( %s, %s, %s,%s)', (username, hashed, email,'Gardener user'))
+
+            secureaccount_id = cursor.lastrowid
+
+            today_date = datetime.now().date()
+            midnight_today = datetime.combine(today_date, time())
+            
+            cursor.execute('INSERT INTO gardner_profile(secureaccount_id,First_Name,Last_Name,Email,Date_Joined,Status) VALUES (%s,%s,%s,%s,%s,%s)', (secureaccount_id, username,username, email,midnight_today, 'Active'))
             connection.commit()
             msg = 'You have successfully registered!'
     elif request.method == 'POST':
@@ -393,29 +419,29 @@ def showWeedlist():
     cursor.execute('SELECT `id`, `common name`, `weed type`, `primary image`, `scientific name`, `description`, `impacts`, `control methods`, `image1`, `image2`, `image3` ,`prImgLocalPath`,`img1LocalPath`,`img2LocalPath`,`img3LocalPath`FROM weed_guide')
     weeds = cursor.fetchall()
     
-    # 对每个杂草条目，检查图片是否存在，如果存在则尝试下载并更新图片路径
+# For each weed entry, check if the image exists. If it does, attempt to download and update the image path.
     for weed in weeds:
-        # 确保传递weed['id']给download_image函数
-        # 对于每个图像，检查URL是否为空
+    # Ensure the weed['id'] is passed to the download_image function
+    # For each image, check if the URL is not empty
         if weed['primary image']:
             weed['primary image'] = download_image(weed['primary image'], weed['scientific name'], "primary", weed['id'])
         else:
-            weed['primary image'] = weed['prImgLocalPath']  # 或设置为默认图片路径
+            weed['primary image'] = weed['prImgLocalPath']  # Or set to a default image path
         
         if weed['image1']:
             weed['image1'] = download_image(weed['image1'], weed['scientific name'], "img1", weed['id'])
         else:
-            weed['image1'] = weed['img1LocalPath']  # 或设置为默认图片路径
+            weed['image1'] = weed['img1LocalPath']  # Or set to a default image path
         
         if weed['image2']:
             weed['image2'] = download_image(weed['image2'], weed['scientific name'], "img2", weed['id'])
         else:
-            weed['image2'] = weed['img2LocalPath']  # 或设置为默认图片路径
+            weed['image2'] = weed['img2LocalPath']  # Or set to a default image path
         
         if weed['image3']:
             weed['image3'] = download_image(weed['image3'], weed['scientific name'], "img3", weed['id'])
         else:
-            weed['image3'] = weed['img3LocalPath']  # 或设置为默认图片路径
+            weed['image3'] = weed['img3LocalPath']  # Or set to a default image path
     
     return render_template('Weedlist.html', weeds=weeds)
 
@@ -441,7 +467,7 @@ def edit_weed(weed_id):
     weed = cursor.fetchone()
     return render_template('ManageWeedEdit.html', weed=weed,weed_id=weed_id)
     
-    
+
 @app.route('/delete_weed/<int:weed_id>', methods=['DELETE'])
 def delete_weed(weed_id):
     cursor = getCursor()
@@ -514,29 +540,29 @@ def ManageWeed():
     cursor.execute('SELECT `id`, `common name`, `weed type`, `primary image`, `scientific name`, `description`, `impacts`, `control methods`, `image1`, `image2`, `image3` ,`prImgLocalPath`,`img1LocalPath`,`img2LocalPath`,`img3LocalPath`FROM weed_guide')
     weeds = cursor.fetchall()
     
-    # 对每个杂草条目，检查图片是否存在，如果存在则尝试下载并更新图片路径
+    # For each weed entry, check whether the image exists, and if it exists, try to download and update the image path
     for weed in weeds:
-        # 确保传递weed['id']给download_image函数
-        # 对于每个图像，检查URL是否为空
+        #make sure pass weed['id'] to download_image function
+        # for every image, check whether the URL is not empty
         if weed['primary image']:
             weed['primary image'] = download_image(weed['primary image'], weed['scientific name'], "primary", weed['id'])
         else:
-            weed['primary image'] = weed['prImgLocalPath']  # 或设置为默认图片路径
+            weed['primary image'] = weed['prImgLocalPath']  # or set to the default image path
         
         if weed['image1']:
             weed['image1'] = download_image(weed['image1'], weed['scientific name'], "img1", weed['id'])
         else:
-            weed['image1'] = weed['img1LocalPath']  # 或设置为默认图片路径
+            weed['image1'] = weed['img1LocalPath']  # or set to the default image path
         
         if weed['image2']:
             weed['image2'] = download_image(weed['image2'], weed['scientific name'], "img2", weed['id'])
         else:
-            weed['image2'] = weed['img2LocalPath']  # 或设置为默认图片路径
+            weed['image2'] = weed['img2LocalPath']  # or set to the default image path
         
         if weed['image3']:
             weed['image3'] = download_image(weed['image3'], weed['scientific name'], "img3", weed['id'])
         else:
-            weed['image3'] = weed['img2LocalPath']  # 或设置为默认图片路径
+            weed['image3'] = weed['img2LocalPath']  # or set to the default image path
     
     return render_template('ManageWeed.html', weeds=weeds)
 
@@ -571,19 +597,20 @@ def change_password():
         new_password = request.form['new_password']
         confirm_password = request.form['confirm_password']
 
-        # 检查两次输入的密码是否一致（尽管前端已做校验，后端校验增加安全性）
+        # check if the passwords match
         if new_password != confirm_password:
-            return "Passwords do not match.", 400  # 或者重定向回原页面，显示错误信息
+            return "Passwords do not match.", 400  
+        # or relocate to the original page,show error message
 
-        # 密码哈希
+        # password hashing
         hashed_password = hashing.hash_value(new_password, salt='abcd')
 
-        # 更新数据库中的密码
+        # update the password in the database
         cursor = getCursor()
         cursor.execute('UPDATE secureaccount SET password = %s WHERE id = %s', (hashed_password, session['id']))
         connection.commit()
 
-        # 登出用户，要求重新登录
+        # user logout need to redirect to login page
         return redirect(url_for('logout'))
     else:
         return redirect(url_for('login'))
@@ -606,7 +633,8 @@ def update_profile():
             
             connection.commit()
             
-            # 更新成功后重定向到个人资料页面
+            # relocate to the personal profile page after updating successfully
+            flash('Profile updated successfully')
             return redirect(url_for('showGardnerUserProfile'))
         # role is Staff or Administrator
         else :           
@@ -617,10 +645,11 @@ def update_profile():
             
             connection.commit()
             
-            # 更新成功后重定向到个人资料页面
+            # relocate to the personal profile page after updating successfully
+            flash('Profile updated successfully')
             return redirect(url_for('ShowPersonalProfile'))
     else:
-        # 如果用户未登录，重定向到登录页面
+        # if user is not logged in, redirect to login page
         return redirect(url_for('login'))
 
 # ! this will be the Gardner Manage Profile add page
@@ -631,38 +660,39 @@ def add_gardner():
 # ! this will be the Gardner Manage Profile add page---to submit
 @app.route('/Staff/ManageGardenersProfile/add/submit', methods=['POST'])
 def add_gardener_submit():
-    # 从表单获取数据
-    first_name = request.form.get('First_Name')
-    last_name = request.form.get('Last_Name')
-    username = first_name + last_name
-    email = request.form.get('Email')
-    address = request.form.get('Address')
-    phone_number = request.form.get('PhoneNumber')
+    if 'loggedin' in session:
+        if request.method == 'POST':
+    # retrieve the data from the form
+            first_name = request.form.get('First_Name')
+            last_name = request.form.get('Last_Name')
+            username = first_name + last_name
+            email = request.form.get('Email')
+            address = request.form.get('Address')
+            phone_number = request.form.get('PhoneNumber')
 
 
-    hashed_password = hashing.hash_value("12345", salt='abcd')
-    # 连接数据库并插入新记录
-    # 注意：这里假设你已经建立了数据库连接
-    # 示例：cursor.execute("INSERT INTO gardner_profile (First_Name, ...) VALUES (%s, ...)", (first_name, ...))
+            hashed_password = hashing.hash_value(request.form.get('password'), salt='abcd')
 
-    today_date = datetime.now().date()
-    midnight_today = datetime.combine(today_date, time())
 
-    cursor = getCursor()
+            today_date = datetime.now().date()
+            midnight_today = datetime.combine(today_date, time())
 
-    cursor.execute("INSERT INTO secureaccount(UserName,password,email,role) VALUES (%s,%s,%s,%s)", (username,hashed_password,email,"Gardener user"))
+            cursor = getCursor()
 
-    secure_account_id = cursor.lastrowid
+            cursor.execute("INSERT INTO secureaccount(UserName,password,email,role) VALUES (%s,%s,%s,%s)", (username,hashed_password,email,"Gardener user"))
 
-    cursor.execute("INSERT INTO gardner_profile(secureaccount_id, First_Name, Last_Name, Address, Email,Phone_Number,Status,Date_Joined) VALUES (%s, %s, %s, %s, %s,%s,%s,%s)", (secure_account_id, first_name, last_name, address, email,phone_number,"Active",midnight_today))
+            secure_account_id = cursor.lastrowid
 
-        # 提交事务并关闭连接
-    connection.commit()
-    cursor.close()
-    connection.close()
+            cursor.execute("INSERT INTO gardner_profile(secureaccount_id, First_Name, Last_Name, Address, Email,Phone_Number,Status,Date_Joined) VALUES (%s, %s, %s, %s, %s,%s,%s,%s)", (secure_account_id, first_name, last_name, address, email,phone_number,"Active",midnight_today))
 
-    # 重定向回园丁管理页面
-    return redirect(url_for('ManageGardenerProfile'))
+                # commit the transaction and close the connection
+            connection.commit()
+            cursor.close()
+            connection.close()
+
+            flash('Add Gardners success!')
+            # relocate to the gardner manage profile page
+            return redirect(url_for('ManageGardenerProfile'))
 
 
 
@@ -674,41 +704,39 @@ def add_staff():
 # ! this will be the Gardner Manage Profile add page---to submit
 @app.route('/Staff/ManageStaff/add/submit', methods=['POST'])
 def add_staff_submit():
-    # 从表单获取数据
-    first_name = request.form.get('First_Name')
-    last_name = request.form.get('Last_Name')
-    username = first_name + last_name
-    email = request.form.get('Email')
-    workphonenumber = request.form.get('WorkPhoneNumber')
+    if 'loggedin' in session:
+        if request.method == 'POST':
+    # retrieve the data from the form
+            first_name = request.form.get('First_Name')
+            last_name = request.form.get('Last_Name')
+            username = first_name + last_name
+            email = request.form.get('Email')
+            workphonenumber = request.form.get('WorkPhoneNumber')
 
-    today_date = datetime.now().date()
-    midnight_today = datetime.combine(today_date, time())
+            today_date = datetime.now().date()
+            midnight_today = datetime.combine(today_date, time())
 
-    position = request.form.get('Position')
-    department = request.form.get('Department')
+            department = request.form.get('Department')
 
-    hashed_password = hashing.hash_value("12345", salt='abcd')
-    # 连接数据库并插入新记录
-    # 注意：这里假设你已经建立了数据库连接
-    # 示例：cursor.execute("INSERT INTO gardner_profile (First_Name, ...) VALUES (%s, ...)", (first_name, ...))
+            hashed_password = hashing.hash_value(request.form.get('password'), salt='abcd')
 
+            cursor = getCursor()
 
-    cursor = getCursor()
+            cursor.execute("INSERT INTO secureaccount(UserName,password,email,role) VALUES (%s,%s,%s,%s)", (username,hashed_password,email,"Staff"))
 
-    cursor.execute("INSERT INTO secureaccount(UserName,password,email,role) VALUES (%s,%s,%s,%s)", (username,hashed_password,email,"Staff"))
+            secure_account_id = cursor.lastrowid
 
-    secure_account_id = cursor.lastrowid
-
-    cursor.execute("INSERT INTO staff_admin(SecureAccountID, First_Name, Last_Name, Email,Work_Phone_number,Hire_date,Position,Department,Status) VALUES (%s, %s, %s, %s,%s,%s,%s,%s,%s)", (secure_account_id, first_name, last_name, email,workphonenumber,midnight_today,position,department,"Active"))
+            cursor.execute("INSERT INTO staff_admin(SecureAccountID, First_Name, Last_Name, Email,Work_Phone_number,Hire_date,Position,Department,Status) VALUES (%s, %s, %s, %s,%s,%s,%s,%s,%s)", (secure_account_id, first_name, last_name, email,workphonenumber,midnight_today,"Staff",department,"Active"))
 
 
-        # 提交事务并关闭连接
-    connection.commit()
-    cursor.close()
-    connection.close()
+                # commit the transaction and close the connection
+            connection.commit()
+            cursor.close()
+            connection.close()
 
-    # 重定向回园丁管理页面
-    return redirect(url_for('ManageStaffProfile'))
+            flash('Add Staff success!')
+            # relocate to the staff manage profile page
+            return redirect(url_for('ManageStaffProfile'))
 
 
 
@@ -716,11 +744,7 @@ def add_staff_submit():
 # ! this will be the Gardner Manage Profile delete action
 @app.route('/delete-gardner/<int:gardner_id>', methods=['DELETE'])
 def deleteGardner(gardner_id):
-    # 连接数据库
-    # 删除指定 ID 的园丁
-    # 示例：
-    # cursor.execute("DELETE FROM gardner_profile WHERE ID = %s", (gardner_id,))
-    # conn.commit()
+
     
     result = delete_gardner_and_account(gardner_id)
 
@@ -737,13 +761,13 @@ def delete_gardner_and_account(gardner_id):
     result = cursor.fetchone()
 
     if result:
-        secureaccount_id = result['secureaccount_id']  # 提取secureaccount_id的值
+        secureaccount_id = result['secureaccount_id']  
 
         if secureaccount_id is not None:
-            # 删除 gardner_profile 表中的记录
+            
             cursor.execute("DELETE FROM gardner_profile WHERE ID = %s", (gardner_id,))
             
-            # 删除 secureaccount 表中的记录
+           
             cursor.execute("DELETE FROM secureaccount WHERE id = %s", (secureaccount_id,))
             connection.commit()
 
@@ -775,13 +799,13 @@ def delete_staff_and_account(staff_id):
     result = cursor.fetchone()
 
     if result:
-        SecureAccountID = result['SecureAccountID']  # 提取secureaccount_id的值
+        SecureAccountID = result['SecureAccountID']  
 
         if SecureAccountID is not None:
-            # 删除 admin_staff 表中的记录
+         
             cursor.execute("DELETE FROM staff_admin WHERE ID = %s", (staff_id,))
             
-            # 删除 secureaccount 表中的记录
+          
             cursor.execute("DELETE FROM secureaccount WHERE id = %s", (SecureAccountID,))
             connection.commit()
 
@@ -795,8 +819,7 @@ def delete_staff_and_account(staff_id):
 
 @app.route('/Staff/ManageGardenersProfile/edit/<int:gardner_id>')
 def edit_gardner(gardner_id):
-    # 这里添加获取指定 gardner_id 的园丁信息的逻辑
-    # 以及加载编辑表单页面的逻辑
+
     cursor = getCursor()
     cursor.execute("SELECT * FROM gardner_profile WHERE ID = %s", (gardner_id,))
     gardner = cursor.fetchone()
@@ -805,8 +828,7 @@ def edit_gardner(gardner_id):
 
 @app.route('/Staff/ManageStaff/edit/<int:staff_id>')
 def edit_staff(staff_id):
-    # 这里添加获取指定 gardner_id 的员工信息的逻辑
-    # 以及加载编辑表单页面的逻辑
+
     cursor = getCursor()
     cursor.execute("SELECT * FROM staff_admin WHERE ID = %s", (staff_id,))
     staff = cursor.fetchone()
@@ -815,7 +837,7 @@ def edit_staff(staff_id):
 
 @app.route('/update_weed/<int:weed_id>', methods=['POST'])
 def update_weed(weed_id):
-    # 从表单中获取数据
+    # retrieve the data from the form
     common_name = request.form.get('common name')
     scientific_name = request.form.get('scientific name')
     weed_type = request.form.get('weed type')
@@ -823,10 +845,10 @@ def update_weed(weed_id):
     impact = request.form.get('impact')
     control_methods = request.form.get('control methods')
 
-    # 连接数据库
+ 
     cursor = getCursor()
 
-    # 准备更新SQL语句
+ 
     sql = '''
         UPDATE weed_guide
         SET `common name` = %s, `scientific name` = %s, `weed type` = %s, 
@@ -836,55 +858,66 @@ def update_weed(weed_id):
     values = (common_name, scientific_name, weed_type, description, impact, control_methods, weed_id)
 
     try:
-        # 执行SQL语句并提交到数据库
+     
         cursor.execute(sql, values)
         connection.commit()
         return redirect(url_for('ManageWeed'))
     except mysql.connector.Error as err:
         print(f"Error updating weed record: {err}")
-        # 可以根据需要返回错误信息或重定向到错误页面
+        
         return redirect(url_for('edit_weed', weed_id=weed_id, message="Failed to update weed information. Please try again."))
 
 
 @app.route('/update-staff/<int:staff_id>', methods=['POST'])
 def update_staff(staff_id):
-    first_name = request.form['First_Name']
-    last_name = request.form['Last_Name']
-    work_phone_number = request.form['Work_Phone_Number']
-    hire_date = request.form['Hire_Date']
-    department = request.form['Department']
-    status = request.form['Status']
+    if 'loggedin' in session:
+        if request.method == 'POST':
+            first_name = request.form['First_Name']
+            last_name = request.form['Last_Name']
+            work_phone_number = request.form['Work_Phone_Number']
+            hire_date = request.form['Hire_Date']
+            department = request.form['Department']
+            status = request.form['Status']
+            newpassword_hashing = hashing.hash_value(request.form.get('password'),salt='abcd')
+            cursor = getCursor()
 
-    cursor = getCursor()
+            cursor.execute('''SELECT * FROM staff_admin WHERE ID = %s''',(staff_id,))
+            result = cursor.fetchone()
+            secureaccount_id = result['SecureAccountID']
 
-    # Check for duplicates
-    query = '''
-    SELECT * FROM staff_admin
-    WHERE Work_Phone_number = %s  AND ID != %s
-    '''
-    cursor.execute(query, (work_phone_number,staff_id,))
-    duplicate = cursor.fetchone()
+            if secureaccount_id is not None:
+            # Check for duplicates
+                query = '''
+                SELECT * FROM staff_admin
+                WHERE Work_Phone_number = %s  AND ID != %s
+                '''
+                cursor.execute(query, (work_phone_number,staff_id,))
+                duplicate = cursor.fetchone()
 
-    if duplicate:
-        # If duplicate exists, pass a message to the frontend
-        message = "Duplicate record found. Please ensure the data is unique."
-        return render_template('ManageStaffsEdit.html', staff_id=staff_id, message=message)
-    else:
-        # If no duplicate, update the gardener's profile
-        update_query = '''
-        UPDATE staff_admin
-        SET First_Name = %s, Last_Name = %s, Work_Phone_number = %s, Hire_date = %s,Department = %s, Status = %s
-        WHERE ID = %s
-        '''
-        cursor.execute(update_query, (first_name, last_name, work_phone_number, hire_date,department, status, staff_id))
-        connection.commit()
+                if duplicate:
+                    # If duplicate exists, pass a message to the frontend
+                    message = "Duplicate record found. Please ensure the data is unique."
+                    return render_template('ManageStaffsEdit.html', staff_id=staff_id, message=message)
+                else:
+                    # If no duplicate, update the gardener's profile
+                    update_query = '''
+                    UPDATE staff_admin
+                    SET First_Name = %s, Last_Name = %s, Work_Phone_number = %s, Hire_date = %s,Department = %s, Status = %s
+                    WHERE ID = %s
+                    '''
+                    updatepassword_query = '''UPDATE secureaccount SET password = %s WHERE ID = %s'''
 
-        positionRole = "Staff"
-        selectQuery = '''SELECT * FROM staff_admin WHERE Position = %s'''
-        cursor.execute(selectQuery, (positionRole,))
-        staffs = cursor.fetchall()
-        # Show the gardner profile page with account info
-        return render_template('ManageStaff.html',staffs=staffs)
+                    cursor.execute(update_query, (first_name, last_name, work_phone_number, hire_date,department, status, staff_id))
+                    cursor.execute(updatepassword_query, (newpassword_hashing, secureaccount_id))
+                    connection.commit()
+
+                    positionRole = "Staff"
+                    selectQuery = '''SELECT * FROM staff_admin WHERE Position = %s'''
+                    cursor.execute(selectQuery, (positionRole,))
+                    staffs = cursor.fetchall()
+                    flash('staff updated successfully')
+                    # Show the gardner profile page with account info
+                    return render_template('ManageStaff.html',staffs=staffs)
        
 
 # ! Edit Gardner Profile       
@@ -898,28 +931,38 @@ def update_gardener(gardner_id):
     status = request.form['Status']
     # Assuming Date_Joined is part of the form and formatted as 'YYYY-MM-DD'
     date_joined = request.form['Date_Joined']
-
+    newpassword_hashing = hashing.hash_value(request.form.get('password'),salt='abcd')
     # Database connection and cursor
     cursor = getCursor()
-
+    cursor.execute('''SELECT * FROM gardner_profile WHERE ID = %s''',(gardner_id,))
+    result = cursor.fetchone()
+    secureaccount_id = result['secureaccount_id']
+    if secureaccount_id is not None:
     # Preparing the SQL query to update gardener's profile
-    update_query = '''
-        UPDATE gardner_profile
-        SET First_Name = %s, Last_Name = %s, Address = %s, Phone_Number = %s, Status = %s, Date_Joined = %s
-        WHERE ID = %s
-    '''
-    
-    try:
-        # Executing the update query
-        cursor.execute(update_query, (first_name, last_name, address, phone_number, status, date_joined, gardner_id))
-        connection.commit()
-        # Redirecting to the gardener profile management page or showing success message
-        return redirect(url_for('ManageGardenerProfile'))
-    except mysql.connector.Error as err:
-        # Handling potential errors and redirecting back to the edit page with an error message
-        print(f"Error updating gardener's profile: {err}")
-        # Optional: Pass a message back to the editing page about the error
-        return redirect(url_for('edit_gardner', gardner_id=gardner_id, message="Failed to update profile. Please try again."))
+        update_query = '''
+            UPDATE gardner_profile
+            SET First_Name = %s, Last_Name = %s, Address = %s, Phone_Number = %s, Status = %s, Date_Joined = %s
+            WHERE ID = %s
+        '''
+        update_password_query = '''        UPDATE secureaccount
+            SET password = %s
+            WHERE ID = %s'''
+        
+
+        try:
+            # Executing the update query
+            cursor.execute(update_query, (first_name, last_name, address, phone_number, status, date_joined, gardner_id))
+            
+            cursor.execute(update_password_query, (newpassword_hashing, secureaccount_id))
+            connection.commit()
+            # Redirecting to the gardener profile management page or showing success message
+            flash('Gardner profile updated successfully.')
+            return redirect(url_for('ManageGardenerProfile'))
+        except mysql.connector.Error as err:
+            # Handling potential errors and redirecting back to the edit page with an error message
+            print(f"Error updating gardener's profile: {err}")
+            # Optional: Pass a message back to the editing page about the error
+            return redirect(url_for('edit_gardner', gardner_id=gardner_id, message="Failed to update profile. Please try again."))
 
 
 if __name__ == '__main__':

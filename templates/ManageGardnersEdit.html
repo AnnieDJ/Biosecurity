@@ -91,11 +91,61 @@
                 <label for="Date_Joined" class="form-label">Date Joined:</label>
                 <input type="date" class="form-control" id="Date_Joined" name="Date_Joined" value="{{ gardner.Date_Joined.strftime('%Y-%m-%d') }}">
             </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">New Password:</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="form-control"
+                required
+                minlength="5"
+                placeholder="Enter a password"
+                aria-describedby="passwordHelpBlock"
+              />
+              <div id="passwordHelpBlock" class="form-text">
+                Password must be at least 5 characters long.
+              </div>
 
             <button type="submit" class="btn btn-primary">Update</button>
         </form>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector("form");
+        const firstNameInput = document.getElementById("First_Name");
+        const lastNameInput = document.getElementById("Last_Name");
+        const phoneNumberInput = document.getElementById("Phone_Number");
+    
+        form.addEventListener("submit", function (e) {
+          // 验证FirstName和LastName只包含字母
+          const nameRegex = /^[A-Za-z]+$/;
+          if (!nameRegex.test(firstNameInput.value)) {
+            e.preventDefault(); // 阻止表单提交
+            alert("First Name should only contain letters.");
+            firstNameInput.focus();
+            return;
+          }
+          if (!nameRegex.test(lastNameInput.value)) {
+            e.preventDefault(); // 阻止表单提交
+            alert("Last Name should only contain letters.");
+            lastNameInput.focus();
+            return;
+          }
+    
+          // 验证PhoneNumber只包含数字
+          const phoneRegex = /^\d+$/;
+          if (!phoneRegex.test(phoneNumberInput.value)) {
+            e.preventDefault(); // 阻止表单提交
+            alert("Phone Number should only contain numbers.");
+            phoneNumberInput.focus();
+            return;
+          }
+        });
+      });
+    </script>
+    
 </body>
 </html>
