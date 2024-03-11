@@ -142,36 +142,36 @@
         const phoneNumberInput = document.getElementById("phoneNumber");
 
         form.addEventListener("submit", function (e) {
-          // 验证邮箱地址
+          // validate email address
           const emailInput = document.getElementById("email");
           const email = emailInput.value;
           const emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
           if (!emailRegex.test(email)) {
-            e.preventDefault(); // 阻止表单提交
+            e.preventDefault(); // block form submission
             alert("Please enter a valid email address.");
             emailInput.focus();
             return;
           }
 
-          // 验证FirstName和LastName只包含字母
+          // valide first name only contain
           const nameRegex = /^[A-Za-z]+$/;
           if (!nameRegex.test(firstNameInput.value)) {
-            e.preventDefault(); // 阻止表单提交
+            e.preventDefault(); // block form submission
             alert("First Name should only contain letters.");
             firstNameInput.focus();
             return;
           }
           if (!nameRegex.test(lastNameInput.value)) {
-            e.preventDefault(); // 阻止表单提交
+            e.preventDefault(); // block form submission
             alert("Last Name should only contain letters.");
             lastNameInput.focus();
             return;
           }
 
-          // 验证PhoneNumber只包含数字
+          // valiade PhoneNumbers only contains numbers
           const phoneRegex = /^\d+$/;
           if (!phoneRegex.test(phoneNumberInput.value)) {
-            e.preventDefault(); // 阻止表单提交
+            e.preventDefault(); // block phone number submission
             alert("Phone Number should only contain numbers.");
             phoneNumberInput.focus();
             return;

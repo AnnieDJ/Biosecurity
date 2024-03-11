@@ -120,25 +120,25 @@
         const phoneNumberInput = document.getElementById("Phone_Number");
     
         form.addEventListener("submit", function (e) {
-          // 验证FirstName和LastName只包含字母
+          // valiate first name and last name contains only letters
           const nameRegex = /^[A-Za-z]+$/;
           if (!nameRegex.test(firstNameInput.value)) {
-            e.preventDefault(); // 阻止表单提交
+            e.preventDefault(); // block submit
             alert("First Name should only contain letters.");
             firstNameInput.focus();
             return;
           }
           if (!nameRegex.test(lastNameInput.value)) {
-            e.preventDefault(); // 阻止表单提交
+            e.preventDefault(); // block submit
             alert("Last Name should only contain letters.");
             lastNameInput.focus();
             return;
           }
     
-          // 验证PhoneNumber只包含数字
+          // valiate phonenumbers 
           const phoneRegex = /^\d+$/;
           if (!phoneRegex.test(phoneNumberInput.value)) {
-            e.preventDefault(); // 阻止表单提交
+            e.preventDefault(); // block submit
             alert("Phone Number should only contain numbers.");
             phoneNumberInput.focus();
             return;

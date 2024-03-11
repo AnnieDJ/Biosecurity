@@ -122,10 +122,10 @@
           const workPhoneNumberInput = document.getElementById("Work_Phone_Number");
       
           form.addEventListener("submit", function(e) {
-            const nameRegex = /^[A-Za-z\s]+$/; // 允许字母和空格
-            const phoneRegex = /^\d+$/; // 仅允许数字
+            const nameRegex = /^[A-Za-z\s]+$/; // letters and spaces allowed
+            const phoneRegex = /^\d+$/; // only numbers are allowed
       
-            // 验证First Name是否只包含字母
+          
             if (!nameRegex.test(firstNameInput.value)) {
               e.preventDefault();
               alert("First Name should only contain letters.");
@@ -133,7 +133,7 @@
               return;
             }
       
-            // 验证Last Name是否只包含字母
+            
             if (!nameRegex.test(lastNameInput.value)) {
               e.preventDefault();
               alert("Last Name should only contain letters.");
@@ -141,7 +141,7 @@
               return;
             }
       
-            // 验证Department是否只包含字母
+         
             if (!nameRegex.test(departmentInput.value)) {
               e.preventDefault();
               alert("Department should only contain letters.");
@@ -149,7 +149,6 @@
               return;
             }
       
-            // 验证WorkPhone Number是否只包含数字
             if (!phoneRegex.test(workPhoneNumberInput.value)) {
               e.preventDefault();
               alert("Work Phone Number should only contain numbers.");

@@ -118,7 +118,7 @@
             .then((response) => response.json())
             .then((data) => {
               if (data.success) {
-                window.location.reload(); // 删除成功后刷新页面
+                window.location.reload();
               } else {
                 alert("Failed to delete weed");
               }

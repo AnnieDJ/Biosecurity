@@ -72,7 +72,7 @@
               alt="Primary Image of {{ weed['common name'] }}"
             />
             {% else %}
-            <!-- Display a placeholder or no image -->
+
             <img
               src="{{ url_for('static', filename=weed['prImgLocalPath']).replace('/static', '', 1) }}"
               alt="Primary Image of {{ weed['common name'] }}"
@@ -80,7 +80,6 @@
             {% endif %}
           </a>
           <p>{{ weed['description'] }}</p>
-          <!-- 可选：展示简短描述 -->
         </div>
         {% else %}
         <p>No weeds found.</p>

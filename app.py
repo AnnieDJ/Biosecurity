@@ -40,7 +40,7 @@ def download_image(image_url, scientific_name, image_type, weed_id):
      # If the URL is empty, do not perform the download and return None or the default image path
     if not image_url:
         print("No image URL provided for downloading.")
-        return None  # 或者返回默认图片路径，例如 'path/to/default/image.png'
+        return None  
     
     # Ensure the directory for storing images exists
     os.makedirs(IMAGE_DIR, exist_ok=True)

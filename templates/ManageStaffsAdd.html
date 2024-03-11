@@ -141,8 +141,8 @@
         const emailInput = document.getElementById("email");
 
         form.addEventListener("submit", function (e) {
-          // 验证First Name和Last Name只包含字母
-          const nameRegex = /^[A-Za-z\s]+$/; // 允许空格以支持多个单词的名字
+          //valiate firstname and lastname only contain letters
+          const nameRegex = /^[A-Za-z\s]+$/; 
           if (!nameRegex.test(firstNameInput.value)) {
             e.preventDefault();
             alert("First Name should only contain letters.");
@@ -156,7 +156,7 @@
             return;
           }
 
-          // 验证WorkPhone Number只包含数字
+          // valiate WorkPhoneNumber only contain numbers
           const phoneRegex = /^\d+$/;
           if (!phoneRegex.test(workPhoneNumberInput.value)) {
             e.preventDefault();
@@ -165,7 +165,7 @@
             return;
           }
 
-          // 验证Email地址
+          // valiate email address
           const emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
           if (!emailRegex.test(emailInput.value)) {
             e.preventDefault();

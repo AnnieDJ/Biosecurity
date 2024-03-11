@@ -139,15 +139,7 @@
         </div>
         <div class="mb-3">
           <label for="impact" class="form-label">Impact:</label>
-          <textarea
-            class="form-control"
-            id="impact"
-            name="impact"
-            readonly
-            <!--
-            添加readonly属性
-            --
-          >
+          <textarea class="form-control" id="impact" name="impact" readonly>
             {{ weed['impact'] }}</textarea
           >
         </div>
@@ -160,9 +152,6 @@
             id="control methods"
             name="control methods"
             readonly
-            <!--
-            添加readonly属性
-            --
           >
             {{ weed['control methods'] }}</textarea
           >
@@ -268,7 +257,7 @@
         var imageFile = document.getElementById(imageId).files[0];
         formData.append("image", imageFile);
         formData.append("weedId", weedId);
-        formData.append("imageType", imageType); // 这里是新添加的，表明图片类型
+        formData.append("imageType", imageType);
 
         $.ajax({
           url: "/upload_image",
@@ -278,7 +267,7 @@
           contentType: false,
           success: function (data) {
             alert("Image uploaded successfully");
-            location.reload(); // 刷新页面显示更新的图片
+            location.reload();
           },
           error: function () {
             alert("Image upload failed");
